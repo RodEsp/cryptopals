@@ -14,7 +14,7 @@ pub fn convert(hex_string: &str) -> String {
 
     let b64_string: String = bytes
         .chunks(3)
-        .map(|chunk| {
+        .flat_map(|chunk| {
             // chunk is a slice of three values from bytes (u8's)
             // we will take these three u8's and make a 24-bit chunk out of them
             // so that we can then split those 24 bits into 6-bit chunks
@@ -47,9 +47,8 @@ pub fn convert(hex_string: &str) -> String {
 
             // Get the base64 encoded string by using the 6-bit bytes as indexes for the B64_ALPHABET array
             base64_bytes
-                .iter()
-                .map(|byte| B64_ALPHABET[*byte as usize] as char) // B64_ALPHABET[*byte as usize] gives us the ASCII decimal value of a char so we need to cast it to char to display the base64 encoded string
-                .collect::<String>()
+                .into_iter()
+                .map(|byte| B64_ALPHABET[byte as usize] as char) // B64_ALPHABET[*byte as usize] gives us the ASCII decimal value of a char so we need to cast it to char to display the base64 encoded string
         })
         .collect();
 

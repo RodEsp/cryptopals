@@ -1,17 +1,11 @@
 // This gives us an array where each item is the ASCII decimal value of the corresponding char shown.
 const B64_ALPHABET: [u8; 64] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-pub fn convert(hex_string: &str) -> String {
-    // This turns the hex string into bytes stored in u8's
-    let bytes = (0..hex_string.len()) // Create an iterator from 0 to hex_string.len()
-        .step_by(2) // In a hex string each byte is two decimals, so we'll step over the hex string by 2 chars each time
-        .map(|i| {
-            let hex_byte = &hex_string[i..=i + 1];
-            u8::from_str_radix(hex_byte, 16) // u8::from_str_radix allows us to turn a string in any numerical base into a u8 in base10 (which is one byte (8 bits))
-                .expect(&format!("Failed to convert 0x{} into a decimal.", hex_byte))
-        })
-        .collect::<Vec<u8>>();
+pub fn _decode(_base64_string: &str) -> Vec<u8> {
+    todo!();
+}
 
+pub fn encode(bytes: Vec<u8>) -> String {
     let b64_string: String = bytes
         .chunks(3)
         .flat_map(|chunk| {

@@ -1,11 +1,12 @@
-use crate::hex;
-
-pub fn fixed(buffer: Vec<u8>) -> Vec<u8> {
-    let fixed_buffer: Vec<u8> = hex::decode("686974207468652062756c6c277320657965");
-
-    fixed_buffer
-        .iter()
-        .zip(buffer.iter())
+pub fn vecs(vec1: Vec<u8>, vec2: Vec<u8>) -> Vec<u8> {
+    vec1.iter()
+        .zip(vec2.iter())
         .map(|(x1, x2)| x1 ^ x2)
         .collect()
+}
+
+pub fn vec_against_char(vec: Vec<u8>, char: char) -> Vec<u8> {
+    let byte: u8 = char as u8;
+
+    vec.into_iter().map(|hex_byte| hex_byte ^ byte).collect()
 }

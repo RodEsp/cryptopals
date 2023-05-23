@@ -12,9 +12,9 @@ pub fn alphabet() -> [char; 128] {
 }
 
 // Takes a vec of bytes and turns it into an ASCII encoded string
-pub fn encode(bytes: &Vec<u8>) -> String {
+pub fn encode(bytes: &Vec<u8>) -> Option<String> {
     match std::str::from_utf8(&bytes) {
-        Ok(c) => c.to_string(),
-        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+        Ok(s) => Some(s.to_string()),
+        Err(_e) => None,
     }
 }

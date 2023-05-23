@@ -19,7 +19,7 @@ pub fn decode(hex_string: &str) -> Vec<u8> {
 // For example if you provide a single u8 with the following bits: 00010010 you will get back "12" since 0001 maps to "1" and 0010 maps to "2".
 // Likewise, this vec:    vec![u8::from_str_radix("00010010", 2).unwrap(), u8::from_str_radix("00010010", 2).unwrap()];
 //           will return: "1212"
-pub fn encode(bytes: Vec<u8>) -> String {
+pub fn encode(bytes: &Vec<u8>) -> String {
     let hex_string: String = bytes
         .into_iter()
         .flat_map(|byte| {

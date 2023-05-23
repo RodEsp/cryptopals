@@ -5,7 +5,7 @@ pub fn _decode(_base64_string: &str) -> Vec<u8> {
     todo!();
 }
 
-pub fn encode(bytes: Vec<u8>) -> String {
+pub fn encode(bytes: &Vec<u8>) -> String {
     let b64_string: String = bytes
         .chunks(3)
         .flat_map(|chunk| {

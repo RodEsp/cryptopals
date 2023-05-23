@@ -11,19 +11,19 @@ mod xor;
 
 fn main() {
     // Challenge 1
-    println!("Challenge 1: {}", base64::encode(&hex::decode("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")));
+    println!("Challenge 1: {}", base64::decode(&hex::encode("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")));
 
     // Challenge 2
     println!(
         "Challenge 2: {}",
-        hex::encode(&xor::vecs(
-            &hex::decode("686974207468652062756c6c277320657965"),
-            &hex::decode("1c0111001f010100061a024b53535009181c")
+        hex::decode(&xor::vecs(
+            &hex::encode("686974207468652062756c6c277320657965"),
+            &hex::encode("1c0111001f010100061a024b53535009181c")
         ))
     );
 
     // Challenge 3
-    let (key, message, ..) = find_encryption_key_and_message(&hex::decode(
+    let (key, message, ..) = find_encryption_key_and_message(&hex::encode(
         "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736",
     ));
 
@@ -42,7 +42,7 @@ fn main() {
     let mut highest_score: usize = 0;
     for line in reader.lines() {
         let (key, message, score) =
-            find_encryption_key_and_message(&hex::decode(&line.unwrap_or_default()));
+            find_encryption_key_and_message(&hex::encode(&line.unwrap_or_default()));
 
         if score > highest_score {
             highest_scoring_key_and_message = (key, message);
@@ -59,9 +59,9 @@ fn main() {
     // Challenge 5
     println!(
         "Challenge 5: {}",
-        hex::encode(&xor::repeating_key(
-            &ascii::decode("ICE"),
-            &ascii::decode(
+        hex::decode(&xor::repeating_key(
+            &ascii::encode("ICE"),
+            &ascii::encode(
                 "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
             )
         ))
@@ -103,11 +103,11 @@ fn find_encryption_key_and_message(bytes: &Vec<u8>) -> (Option<char>, Option<Str
                 // Give a score to each secret key and message that states how likely it is to be the secret info we're after
                 (
                     char,
-                    ascii::encode(&decrypted_bytes),
+                    ascii::decode(&decrypted_bytes),
                     english_score(&decrypted_bytes),
                 )
             } else {
-                (char, ascii::encode(&decrypted_bytes), 0)
+                (char, ascii::decode(&decrypted_bytes), 0)
             }
         })
         .collect::<Vec<_>>();

@@ -1,11 +1,11 @@
 // This gives us an array where each item is the ASCII decimal value of the corresponding char shown.
 const B64_ALPHABET: [u8; 64] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-pub fn _decode(_base64_string: &str) -> Vec<u8> {
+pub fn _encode(_base64_string: &str) -> Vec<u8> {
     todo!();
 }
 
-pub fn encode(bytes: &Vec<u8>) -> String {
+pub fn decode(bytes: &Vec<u8>) -> String {
     let b64_string: String = bytes
         .chunks(3)
         .flat_map(|chunk| {

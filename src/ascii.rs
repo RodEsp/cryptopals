@@ -11,14 +11,14 @@ pub fn alphabet() -> [char; 128] {
     return ascii_alphabet;
 }
 
-pub fn decode(text: &str) -> Vec<u8> {
+pub fn encode(text: &str) -> Vec<u8> {
     let bytes = text.chars().map(|char| char as u8).collect::<Vec<u8>>();
 
     return bytes;
 }
 
 // Takes a vec of bytes and turns it into an ASCII encoded string
-pub fn encode(bytes: &Vec<u8>) -> Option<String> {
+pub fn decode(bytes: &Vec<u8>) -> Option<String> {
     match std::str::from_utf8(&bytes) {
         Ok(s) => Some(s.to_string()),
         Err(_e) => None,

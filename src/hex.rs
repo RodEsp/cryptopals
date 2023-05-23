@@ -2,7 +2,7 @@
 const BASE16_ALPHABET: [u8; 16] = *b"0123456789ABCDEF";
 
 // The return value's bits will be Big Endian
-pub fn encode(hex_string: &str) -> Vec<u8> {
+pub fn string_to_bytes(hex_string: &str) -> Vec<u8> {
     let bytes = (0..hex_string.len()) // Create an iterator from 0 to hex_string.len()
         .step_by(2) // In a hex string each byte is two decimals, so we'll step over the hex string by 2 chars each time
         .map(|i| {
@@ -19,7 +19,7 @@ pub fn encode(hex_string: &str) -> Vec<u8> {
 // For example if you provide a single u8 with the following bits: 00010010 you will get back "12" since 0001 maps to "1" and 0010 maps to "2".
 // Likewise, this vec:    vec![u8::from_str_radix("00010010", 2).unwrap(), u8::from_str_radix("00010010", 2).unwrap()];
 //           will return: "1212"
-pub fn decode(bytes: &Vec<u8>) -> String {
+pub fn bytes_to_string(bytes: &Vec<u8>) -> String {
     let hex_string: String = bytes
         .into_iter()
         .flat_map(|byte| {

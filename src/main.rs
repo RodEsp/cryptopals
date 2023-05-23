@@ -11,19 +11,19 @@ mod xor;
 
 fn main() {
     // Challenge 1
-    println!("Challenge 1: {}", base64::decode(&hex::encode("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")));
+    println!("Challenge 1: {}", base64::bytes_to_string(&hex::string_to_bytes("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")));
 
     // Challenge 2
     println!(
         "Challenge 2: {}",
-        hex::decode(&xor::vecs(
-            &hex::encode("686974207468652062756c6c277320657965"),
-            &hex::encode("1c0111001f010100061a024b53535009181c")
+        hex::bytes_to_string(&xor::vecs(
+            &hex::string_to_bytes("686974207468652062756c6c277320657965"),
+            &hex::string_to_bytes("1c0111001f010100061a024b53535009181c")
         ))
     );
 
     // Challenge 3
-    let (key, message, ..) = find_encryption_key_and_message(&hex::encode(
+    let (key, message, ..) = find_encryption_key_and_message(&hex::string_to_bytes(
         "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736",
     ));
 
@@ -38,34 +38,62 @@ fn main() {
         File::open("./data/challenge4.txt").expect("Was not able to read ./data/challenge4.txt");
     let reader = BufReader::new(file);
 
-    let mut highest_scoring_key_and_message: (Option<char>, Option<String>) = (None, None);
+    let mut highest_scoring_key = None;
+    let mut highest_scoring_message = None;
     let mut highest_score: usize = 0;
     for line in reader.lines() {
         let (key, message, score) =
-            find_encryption_key_and_message(&hex::encode(&line.unwrap_or_default()));
+            find_encryption_key_and_message(&hex::string_to_bytes(&line.unwrap_or_default()));
 
         if score > highest_score {
-            highest_scoring_key_and_message = (key, message);
+            highest_scoring_key = key;
+            highest_scoring_message = message;
             highest_score = score;
         }
     }
 
     println!(
         "Challenge 4: Key = '{}', Message = \"{}\"",
-        highest_scoring_key_and_message.0.unwrap_or_default(),
-        highest_scoring_key_and_message.1.unwrap_or_default()
+        highest_scoring_key.unwrap_or_default(),
+        highest_scoring_message.unwrap_or_default()
     );
 
     // Challenge 5
     println!(
         "Challenge 5: {}",
-        hex::decode(&xor::repeating_key(
-            &ascii::encode("ICE"),
-            &ascii::encode(
+        hex::bytes_to_string(&xor::repeating_key(
+            &ascii::string_to_bytes("ICE"),
+            &ascii::string_to_bytes(
                 "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
             )
         ))
-    )
+    );
+
+    // Challenge 6
+    let min_keysize = 1;
+    let max_keysize = 100;
+    let mut keysize = 1;
+}
+
+fn hamming_distance(s1: &str, s2: &str) -> u32 {
+    let mut hamming_distance = 0;
+
+    let bytes1;
+    let bytes2;
+    if s1.len() > s2.len() {
+        bytes1 = ascii::string_to_bytes(s1);
+        bytes2 = ascii::string_to_bytes(s2);
+    } else {
+        bytes2 = ascii::string_to_bytes(s1);
+        bytes1 = ascii::string_to_bytes(s2);
+    }
+
+    for i in 0..bytes1.len() {
+        hamming_distance +=
+            (bytes1.get(i).unwrap_or(&0) ^ bytes2.get(i).unwrap_or(&0)).count_ones();
+    }
+
+    return hamming_distance;
 }
 
 // Checks how many times the 13 most common english language characters appear in a string (represented by its individual bytes) and returns their count
@@ -103,11 +131,11 @@ fn find_encryption_key_and_message(bytes: &Vec<u8>) -> (Option<char>, Option<Str
                 // Give a score to each secret key and message that states how likely it is to be the secret info we're after
                 (
                     char,
-                    ascii::decode(&decrypted_bytes),
+                    ascii::bytes_to_string(&decrypted_bytes),
                     english_score(&decrypted_bytes),
                 )
             } else {
-                (char, ascii::decode(&decrypted_bytes), 0)
+                (char, ascii::bytes_to_string(&decrypted_bytes), 0)
             }
         })
         .collect::<Vec<_>>();

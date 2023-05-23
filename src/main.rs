@@ -55,6 +55,17 @@ fn main() {
         highest_scoring_key_and_message.0.unwrap_or_default(),
         highest_scoring_key_and_message.1.unwrap_or_default()
     );
+
+    // Challenge 5
+    println!(
+        "Challenge 5: {}",
+        hex::encode(&xor::repeating_key(
+            &ascii::decode("ICE"),
+            &ascii::decode(
+                "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+            )
+        ))
+    )
 }
 
 // Checks how many times the 13 most common english language characters appear in a string (represented by its individual bytes) and returns their count

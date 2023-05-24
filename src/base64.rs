@@ -1,15 +1,109 @@
 // This gives us an array where each item is the ASCII decimal value of the corresponding char shown.
 const B64_ALPHABET: [u8; 64] = *b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+// The mapping in char_index represents how ASCII chars map to 6-bit bytes in the base64 encoding spec (see the table at https://en.wikipedia.org/wiki/Base64)
+// All of the nums below are u8's (8-bits) whose first 2 bits can be ignored to give us the 6-bit "byte" that corresponds to the Base64 encoding
+pub fn char_index(char: char) -> u8 {
+    match char {
+        'A' => 0,
+        'B' => 1,
+        'C' => 2,
+        'D' => 3,
+        'E' => 4,
+        'F' => 5,
+        'G' => 6,
+        'H' => 7,
+        'I' => 8,
+        'J' => 9,
+        'K' => 10,
+        'L' => 11,
+        'M' => 12,
+        'N' => 13,
+        'O' => 14,
+        'P' => 15,
+        'Q' => 16,
+        'R' => 17,
+        'S' => 18,
+        'T' => 19,
+        'U' => 20,
+        'V' => 21,
+        'W' => 22,
+        'X' => 23,
+        'Y' => 24,
+        'Z' => 25,
+        'a' => 26,
+        'b' => 27,
+        'c' => 28,
+        'd' => 29,
+        'e' => 30,
+        'f' => 31,
+        'g' => 32,
+        'h' => 33,
+        'i' => 34,
+        'j' => 35,
+        'k' => 36,
+        'l' => 37,
+        'm' => 38,
+        'n' => 39,
+        'o' => 40,
+        'p' => 41,
+        'q' => 42,
+        'r' => 43,
+        's' => 44,
+        't' => 45,
+        'u' => 46,
+        'v' => 47,
+        'w' => 48,
+        'x' => 49,
+        'y' => 50,
+        'z' => 51,
+        '0' => 52,
+        '1' => 53,
+        '2' => 54,
+        '3' => 55,
+        '4' => 56,
+        '5' => 57,
+        '6' => 58,
+        '7' => 59,
+        '8' => 60,
+        '9' => 61,
+        '+' => 62,
+        '/' => 63,
+        _ => panic!("Invalid character passed to char_index"),
+    }
+}
 pub fn string_to_bytes(base64_string: &str) -> Vec<u8> {
-    let bytes = (0..base64_string.len()) // Create an iterator from 0 to hex_string.len()
-        .step_by(4) // In a hex string each byte is two decimals, so we'll step over the hex string by 2 chars each time
-        .map(|i| {
-            let hex_byte = &base64_string[i..=i + 3];
-            u8::from_str_radix(hex_byte, 64) // u8::from_str_radix allows us to turn a string in any numerical base into a u8 in base10 (which is one byte (8 bits))
-                .expect(&format!("Failed to convert 0x{} into a decimal.", hex_byte))
+    // Base64 strings are encoded in binary as 6-bit chunks. So for each 8-bit byte we only care about its first 6 bits.
+    let bytes = base64_string
+        .chars()
+        .collect::<Vec<char>>()
+        .chunks(4) // Split the chars of the base64 string into chunks of 4. This way we can assign 6-bits of each to a 24-bit chunks (6 * 4 = 24) and later on, split those 24-bits into even 8-bit bytes (24 / 8 = 3)
+        .map(|chunk| {
+            // This map turns our chunks of 4 bytes into the 8-bit bytes that correspond to the binary encoding of a base64 string by using the char_index mapping above
+            chunk
+                .into_iter()
+                .filter(|char| *char != &'=') // '=' is a padding char in a base64 string so we will filter it out here since it doesn't have any actual bit encoding
+                .map(|char| char_index(*char))
+                .collect()
         })
-        .collect::<Vec<u8>>();
+        // Now that we have a set of bytes that correspond to the base64 encoding we will us bit shifting to "throw away" the unnecessary bits
+        // this will allow us to pull out the relevant 24-bits in four 8-bit bytes and stuff them into a new set of three 8-bit bytes.
+        .flat_map(|bytes: Vec<u8>| match bytes.len() {
+            // We match on the length of the byte vector in case there were padding chars, '=', in our base64 string that left us without a clean multiple of 4 for the last chunk in the map statement above
+            2 => vec![bytes[0] << 2 | bytes[1] >> 4, bytes[1] << 4],
+            3 => vec![
+                bytes[0] << 2 | bytes[1] >> 4,
+                bytes[1] << 4 | bytes[2] >> 2,
+                bytes[2] << 6,
+            ],
+            4 => vec![
+                bytes[0] << 2 | bytes[1] >> 4,
+                bytes[1] << 4 | bytes[2] >> 2,
+                bytes[2] << 6 | bytes[3],
+            ],
+            _ => unreachable!(),
+        })
+        .collect();
 
     return bytes;
 }

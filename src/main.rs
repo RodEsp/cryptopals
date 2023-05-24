@@ -70,6 +70,24 @@ fn main() {
     );
 
     // Challenge 6
+    let file =
+        File::open("./data/challenge6.txt").expect("Was not able to read ./data/challenge6.txt");
+    let reader = BufReader::new(file);
+    let base64_string: String = reader
+        .lines()
+        // Remove newlines from file
+        .map(|line| {
+            let mut s = line.unwrap_or_default();
+            let len = s.trim_end_matches(&['\r', '\n'][..]).len();
+            s.truncate(len);
+            return s;
+        })
+        .collect();
+
+    let bytes = base64::string_to_bytes(&base64_string);
+
+    println!("{}", ascii::bytes_to_string(&bytes).unwrap_or_default());
+
     let min_keysize = 1;
     let max_keysize = 100;
     let mut keysize = 1;

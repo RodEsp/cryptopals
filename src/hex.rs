@@ -4,7 +4,7 @@ const BASE16_ALPHABET: [u8; 16] = *b"0123456789ABCDEF";
 // The return value's bits will be Big Endian
 pub fn string_to_bytes(hex_string: &str) -> Vec<u8> {
     let bytes = (0..hex_string.len()) // Create an iterator from 0 to hex_string.len()
-        .step_by(2) // In a hex string each byte is two decimals, so we'll step over the hex string by 2 chars each time
+        .step_by(2) // In a hex string each byte is two chars, so we'll step over the hex string by 2 chars each time
         .map(|i| {
             let hex_byte = &hex_string[i..=i + 1];
             u8::from_str_radix(hex_byte, 16) // u8::from_str_radix allows us to turn a string in any numerical base into a u8 in base10 (which is one byte (8 bits))

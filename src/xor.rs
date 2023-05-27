@@ -5,6 +5,10 @@ pub fn vecs(vec1: &Vec<u8>, vec2: &Vec<u8>) -> Vec<u8> {
         .collect()
 }
 
+pub fn u8_against_char(byte: u8, char: char) -> u8 {
+    byte ^ (char as u8)
+}
+
 pub fn vec_against_char(vec: &Vec<u8>, char: char) -> Vec<u8> {
     let byte: u8 = char as u8;
 

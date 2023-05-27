@@ -72,6 +72,7 @@ pub fn char_index(char: char) -> u8 {
         _ => panic!("Invalid character passed to char_index"),
     }
 }
+
 pub fn string_to_bytes(base64_string: &str) -> Vec<u8> {
     // Base64 strings are encoded in binary as 6-bit chunks. So for each 8-bit byte we only care about its first 6 bits.
     let bytes = base64_string
@@ -150,4 +151,20 @@ pub fn bytes_to_string(bytes: &Vec<u8>) -> String {
         .collect();
 
     return b64_string;
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::ascii;
+
+    #[test]
+    fn base64_encode_test() {
+        assert_eq!(super::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")), "SGVsbG8sIGhvdyBhcmUgeW91Pz8/")
+    }
+    
+    #[test]
+    fn base64_decode_test() {
+        assert_eq!(ascii::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")).unwrap(), "Hello, how are you???")
+    }
 }

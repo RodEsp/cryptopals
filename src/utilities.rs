@@ -1,24 +1,19 @@
 use crate::{ascii, xor};
 
-pub fn hamming_distance(s1: &str, s2: &str) -> u32 {
-    let mut hamming_distance = 0;
-
-    let bytes1;
-    let bytes2;
-    if s1.len() > s2.len() {
-        bytes1 = ascii::string_to_bytes(s1);
-        bytes2 = ascii::string_to_bytes(s2);
-    } else {
-        bytes2 = ascii::string_to_bytes(s1);
-        bytes1 = ascii::string_to_bytes(s2);
+pub fn hamming_distance(bytes1: &[u8], bytes2: &[u8]) -> u32 {
+    if bytes1.len() != bytes2.len() {
+        return u32::MAX;
     }
+
+    let mut h_dist = 0;
 
     for i in 0..bytes1.len() {
-        hamming_distance +=
-            (bytes1.get(i).unwrap_or(&0) ^ bytes2.get(i).unwrap_or(&0)).count_ones();
+        h_dist += (bytes1.get(i).expect("Can not compare the hamming distance")
+            ^ bytes2.get(i).expect("Can not compare the hamming distance"))
+        .count_ones();
     }
 
-    return hamming_distance;
+    return h_dist;
 }
 
 // Checks how many times the 13 most common english language characters appear in a string (represented by its individual bytes) and returns their count
@@ -36,7 +31,9 @@ pub fn english_score(vec: &Vec<u8>) -> usize {
     return score;
 }
 
-pub fn find_encryption_key_and_message(bytes: &Vec<u8>) -> (Option<char>, Option<String>, usize) {
+pub fn find_single_char_repeating_xor_key_and_message(
+    bytes: &Vec<u8>,
+) -> (Option<char>, Option<String>, usize) {
     // Create a vec of tuples that contain the character, message, and a score
     // The score notes the likelyhood that the message is the secret message
     // Which also means taht the character is our secret key
@@ -83,7 +80,10 @@ mod tests {
     #[test]
     fn test_hamming_distance() {
         assert_eq!(
-            hamming_distance("this is a test", "wokka wokka!!!"),
+            hamming_distance(
+                &ascii::string_to_bytes("this is a test"),
+                &ascii::string_to_bytes("wokka wokka!!!")
+            ),
             37
         );
     }

@@ -153,18 +153,24 @@ pub fn bytes_to_string(bytes: &Vec<u8>) -> String {
     return b64_string;
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::ascii;
 
     #[test]
     fn base64_encode_test() {
-        assert_eq!(super::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")), "SGVsbG8sIGhvdyBhcmUgeW91Pz8/")
+        assert_eq!(
+            super::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")),
+            "SGVsbG8sIGhvdyBhcmUgeW91Pz8/"
+        )
     }
-    
+
     #[test]
     fn base64_decode_test() {
-        assert_eq!(ascii::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")).unwrap(), "Hello, how are you???")
+        assert_eq!(
+            ascii::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/"))
+                .unwrap(),
+            "Hello, how are you???"
+        )
     }
 }

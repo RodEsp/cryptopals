@@ -9,6 +9,7 @@ mod tests {
     use std::{
         fs::File,
         io::{BufRead, BufReader},
+        vec,
     };
 
     use crate::hex;
@@ -37,9 +38,10 @@ mod tests {
     // Challenge 3
     #[test]
     fn challenge_3_test() {
-        let (key, message, ..) = find_encryption_key_and_message(&hex::string_to_bytes(
-            "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736",
-        ));
+        let (key, message, ..) =
+            find_single_char_repeating_xor_key_and_message(&hex::string_to_bytes(
+                "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736",
+            ));
 
         assert_eq!(key.unwrap_or_default(), 'X');
         assert_eq!(
@@ -59,8 +61,9 @@ mod tests {
         let mut highest_scoring_message = None;
         let mut highest_score: usize = 0;
         for line in reader.lines() {
-            let (key, message, score) =
-                find_encryption_key_and_message(&hex::string_to_bytes(&line.unwrap_or_default()));
+            let (key, message, score) = find_single_char_repeating_xor_key_and_message(
+                &hex::string_to_bytes(&line.unwrap_or_default()),
+            );
 
             if score > highest_score {
                 highest_scoring_key = key;
@@ -92,8 +95,9 @@ mod tests {
     // Challenge 6
     #[test]
     fn challenge_6_test() {
-        let file =
-        File::open("./data/challenge6.txt").expect("Was not able to read ./data/challenge6.txt");
+        // First we read the encrypted data from a file
+        let file = File::open("./data/challenge6.txt")
+            .expect("Was not able to read ./data/challenge6.txt");
         let reader = BufReader::new(file);
         let base64_string: String = reader
             .lines()
@@ -106,26 +110,93 @@ mod tests {
             })
             .collect();
 
-        let bytes = base64::string_to_bytes(&base64_string);
-        
-        let key_size = 2;
+        // This is our encrypted data in raw bytes
+        let encrypted_bytes = base64::string_to_bytes(&base64_string);
+
+        /* Here we find the most likely key size that was used to encrypt the the data
+         * To do this, for each possible key size from 0 to KEYSIZE, we take two consecutive chunks of the same number of bytes from the encrypted bytes
+         *     chunk_1 = encrypted_bytes[0..KEYSIZE]
+         *     chunk_2 = encrypted_bytes[KEYSIZE..KEYSIZE * 2]
+         * then we find the hamming distance between them and normalize it by dividing by it with the key size
+         *     normalized_hamming_distance = hamming_distance(chunk_1, chunk_2)
+         * The key size that produces with the smallest normalized hamming distance is probably the key.
+         * For an explanation of why this works see https://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance/8118#8118
+         */
+        let min_key_size = 2;
         let max_key_size = 40;
 
-        // TODO: Find the most likely key_size being used to encrypt the ciphertext
-        // For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, 
-        // and find the hamming distance between them. Normalize this result by dividing by KEYSIZE.
-        // The KEYSIZE with the smallest normalized hamming distance is probably the key.
+        struct KeySizeWithNormalizedHammingDistance {
+            key_size: usize,
+            normalized_hamming_distance: f32,
+        }
+        let mut key_size_likelihoods = Vec::<KeySizeWithNormalizedHammingDistance>::new(); // Stores each key size with a numerial score that corresponds to the normalized hamming distance it produced
 
-        // TODO: Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+        for key_size in min_key_size..=max_key_size {
+            key_size_likelihoods.push(KeySizeWithNormalizedHammingDistance {
+                key_size,
+                normalized_hamming_distance: hamming_distance(
+                    // Here we multiply the chunk sizes by 4 in order to make the chunks corresponding to each key size bigger
+                    // This gives us an advantage as explained in the link above.
+                    &encrypted_bytes[0..(key_size * 4)],
+                    &encrypted_bytes[(key_size * 4)..(key_size * 2 * 4)],
+                ) as f32
+                    / key_size as f32,
+            });
+        }
 
-        // TODO: Transpose the blocks: make a block that is the first byte of every block,
-        // and a block that is the second byte of every block, and so on.
+        // Sort the key sizes by most likely based on their normalized hamming distances
+        key_size_likelihoods.sort_by(|a, b| {
+            a.normalized_hamming_distance
+                .total_cmp(&b.normalized_hamming_distance)
+        });
 
-        // TODO: Solve each block as if it was single-character XOR. You can use the utilities::find_encryption_key_and_message function for this.
+        // Now that we probably know the correct key size, we break up the encrypted data into byte blocks of KEYSIZE length.
+        // Each one of these blocks has been encrypted with repeating key XOR using the same key.
+        let most_likely_key_size = key_size_likelihoods[0].key_size;
+        let key_size_chunks = encrypted_bytes.chunks(most_likely_key_size);
 
-        // TODO: Find the key used to encrypt the ciphertext by concatenating the key for each block.
-        // For each block, the single-byte XOR key that produces the best looking histogram is the repeating-key XOR key byte for that block. Put them together and you have the key.
+        /* We know that each one of these blocks was encrypted with a repeating key XOR,
+         *  that means that each byte with the same index in each of these blocks was encrypted with the same single character
+         * So to find the repeating key that was used for the encrypted data we will group all bytes in each key sized chunk by their index
+         * Then we can solve each of these group as if it was a single char repeating XOR.
+         */
 
-        assert_eq!("Some key", "Some message");
+        // Group the bytes in each key sized byte chunks by their index
+        let bytes_grouped_by_chunk_index =
+            key_size_chunks.fold(Vec::<Vec<u8>>::new(), |mut acc, chunk| {
+                for (i, byte) in chunk.iter().enumerate() {
+                    if i >= acc.len() {
+                        acc.push(Vec::<u8>::new())
+                    }
+                    acc[i % most_likely_key_size].push(*byte);
+                }
+                return acc;
+            });
+
+        let mut key_chars: Vec<char> = vec![];
+
+        // Guess the character that was used to encrypt each group of bytes
+        bytes_grouped_by_chunk_index.into_iter().for_each(|bytes| {
+            key_chars.push(
+                find_single_char_repeating_xor_key_and_message(&bytes)
+                    .0
+                    .unwrap_or_default(),
+            );
+        });
+
+        // Find the key that was used to encrypt the data by concatenating the single-char we guessed for each group of bytes.
+        let key = key_chars.into_iter().collect::<String>();
+
+        assert_eq!(key, "Terminator X: Bring the noise");
+
+        // This prints the decoded text using the key we found
+        // println!(
+        //     "{}",
+        //     ascii::bytes_to_string(&xor::repeating_key(
+        //         &ascii::string_to_bytes(&key),
+        //         &encrypted_bytes
+        //     ))
+        //     .unwrap()
+        // );
     }
 }

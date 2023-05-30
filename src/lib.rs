@@ -119,7 +119,7 @@ mod tests {
          *     chunk_2 = encrypted_bytes[KEYSIZE..KEYSIZE * 2]
          * then we find the hamming distance between them and normalize it by dividing by it with the key size
          *     normalized_hamming_distance = hamming_distance(chunk_1, chunk_2)
-         * The key size that produces with the smallest normalized hamming distance is probably the key.
+         * The key size that produces the smallest normalized hamming distance is probably the key.
          * For an explanation of why this works see https://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance/8118#8118
          */
         let min_key_size = 2;

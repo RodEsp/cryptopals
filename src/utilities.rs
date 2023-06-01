@@ -1,4 +1,29 @@
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
+
 use crate::{ascii, xor};
+
+pub fn read_file(path: &str) -> String {
+    let file = File::open(path).expect(&format!("Was not able to read {}", path));
+    let reader = BufReader::new(file);
+    reader
+        .lines()
+        // Remove newlines from file
+        .map(|line| {
+            let mut s = line.unwrap_or_default();
+            let len = s.trim_end_matches(&['\r', '\n'][..]).len();
+            s.truncate(len);
+            return s;
+        })
+        .collect()
+}
+
+pub fn line_buffer(path: &str) -> impl std::io::BufRead {
+    let file = File::open(path).expect(&format!("Was not able to read {}", path));
+    BufReader::new(file)
+}
 
 pub fn hamming_distance(bytes1: &[u8], bytes2: &[u8]) -> u32 {
     if bytes1.len() != bytes2.len() {
@@ -78,7 +103,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hamming_distance() {
+    fn hamming_distance_test() {
         assert_eq!(
             hamming_distance(
                 &ascii::string_to_bytes("this is a test"),

@@ -6,11 +6,7 @@ pub mod xor;
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs::File,
-        io::{BufRead, BufReader},
-        vec,
-    };
+    use std::{io::BufRead, vec};
 
     use openssl::symm::{decrypt, Cipher};
 
@@ -55,14 +51,12 @@ mod tests {
     // Challenge 4
     #[test]
     fn challenge_4_test() {
-        let file = File::open("./data/challenge4.txt")
-            .expect("Was not able to read ./data/challenge4.txt");
-        let reader = BufReader::new(file);
+        let line_buffer = line_buffer("./data/challenge4.txt");
 
         let mut highest_scoring_key = None;
         let mut highest_scoring_message = None;
         let mut highest_score: usize = 0;
-        for line in reader.lines() {
+        for line in line_buffer.lines() {
             let (key, message, score) = find_single_char_repeating_xor_key_and_message(
                 &hex::string_to_bytes(&line.unwrap_or_default()),
             );
@@ -98,19 +92,7 @@ mod tests {
     #[test]
     fn challenge_6_test() {
         // First we read the encrypted data from a file
-        let file = File::open("./data/challenge6.txt")
-            .expect("Was not able to read ./data/challenge6.txt");
-        let reader = BufReader::new(file);
-        let base64_string: String = reader
-            .lines()
-            // Remove newlines from file
-            .map(|line| {
-                let mut s = line.unwrap_or_default();
-                let len = s.trim_end_matches(&['\r', '\n'][..]).len();
-                s.truncate(len);
-                return s;
-            })
-            .collect();
+        let base64_string = read_file("./data/challenge6.txt");
 
         // This is our encrypted data in raw bytes
         let encrypted_bytes = base64::string_to_bytes(&base64_string);
@@ -206,19 +188,7 @@ mod tests {
     #[test]
     fn challenge_7_test() {
         // First we read the encrypted data from a file
-        let file = File::open("./data/challenge7.txt")
-            .expect("Was not able to read ./data/challenge7.txt");
-        let reader = BufReader::new(file);
-        let base64_string: String = reader
-            .lines()
-            // Remove newlines from file
-            .map(|line| {
-                let mut s = line.unwrap_or_default();
-                let len = s.trim_end_matches(&['\r', '\n'][..]).len();
-                s.truncate(len);
-                return s;
-            })
-            .collect();
+        let base64_string = read_file("./data/challenge7.txt");
 
         // This is our encrypted data in raw bytes
         let encrypted_bytes = base64::string_to_bytes(&base64_string);
@@ -231,5 +201,42 @@ mod tests {
         .unwrap();
 
         assert_eq!(decrypted_bytes, *b"I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n");
+    }
+
+    // Challenge 8
+    #[test]
+    fn challenge_8_test() {
+        let file = line_buffer("./data/challenge8.txt");
+
+        let mut line_scores = Vec::<(usize, usize, String)>::new();
+
+        for (index, hex_string) in file.lines().enumerate() {
+            let line_number = index + 1;
+            let bytes = hex::string_to_bytes(
+                &hex_string
+                    .as_ref()
+                    .expect("Could not read hex string from file."),
+            );
+
+            let mut score = 0;
+            for chunk in bytes.chunks(16) {
+                for next_chunk in bytes.chunks(16) {
+                    if chunk == next_chunk {
+                        score += 1;
+                    }
+                }
+            }
+
+            let line_score = (score, line_number, hex_string.unwrap());
+            line_scores.push(line_score);
+        }
+
+        let highest_scoring_line = line_scores
+            .into_iter()
+            .max()
+            .expect("Could not get the max score from lines");
+
+        assert_eq!(highest_scoring_line.1, 133);
+        assert_eq!(highest_scoring_line.2, "d880619740a8a19b7840a8a31c810a3d08649af70dc06f4fd5d2d69c744cd283e2dd052f6b641dbf9d11b0348542bb5708649af70dc06f4fd5d2d69c744cd2839475c9dfdbc1d46597949d9c7e82bf5a08649af70dc06f4fd5d2d69c744cd28397a93eab8d6aecd566489154789a6b0308649af70dc06f4fd5d2d69c744cd283d403180c98c8f6db1f2a3f9c4040deb0ab51b29933f2c123c58386b06fba186a");
     }
 }

@@ -131,25 +131,11 @@ pub fn find_single_char_repeating_xor_key_and_message(
     let mut most_likely_key_and_message: (Option<char>, Option<String>, usize) = (None, None, 0);
     scores.into_iter().for_each(|item| {
         if item.2 > most_likely_key_and_message.2 {
-            most_likely_key_and_message = ((item.0).into(), (item.1).into(), item.2);
+            most_likely_key_and_message = (Some(item.0), Some(item.1), item.2);
         }
     });
 
     return most_likely_key_and_message;
-}
-
-pub trait Pad {
-    fn pad(self: &mut Self, number_of_bytes: usize) -> &mut Self;
-}
-
-impl Pad for Vec<u8> {
-    fn pad(self: &mut Self, number_of_bytes: usize) -> &mut Self {
-        for _n in 0..number_of_bytes {
-            self.push(0x04);
-        }
-
-        self
-    }
 }
 
 #[cfg(test)]

@@ -12,15 +12,16 @@ pub fn alphabet() -> [char; 128] {
 }
 
 pub fn string_to_bytes(text: &str) -> Vec<u8> {
-    let bytes = text.chars().map(|char| char as u8).collect::<Vec<u8>>();
-
-    return bytes;
+    text.as_bytes().to_vec()
 }
 
 // Takes a vec of bytes and turns it into an ASCII encoded string
-pub fn bytes_to_string(bytes: &Vec<u8>) -> Option<String> {
-    match std::str::from_utf8(&bytes) {
-        Ok(s) => Some(s.to_string()),
-        Err(_e) => None,
+pub fn bytes_to_string(bytes: &Vec<u8>) -> String {
+    match String::from_utf8(bytes.to_vec()) {
+        Ok(s) => Some(s).expect("Could not convert bytes into ASCII string"),
+        Err(_e) => {
+            // eprintln!("{:?}", e);
+            "".to_string()
+        }
     }
 }

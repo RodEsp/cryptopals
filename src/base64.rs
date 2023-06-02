@@ -168,8 +168,7 @@ mod tests {
     #[test]
     fn base64_decode_test() {
         assert_eq!(
-            ascii::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/"))
-                .unwrap(),
+            ascii::bytes_to_string(&super::string_to_bytes("SGVsbG8sIGhvdyBhcmUgeW91Pz8/")),
             "Hello, how are you???"
         )
     }

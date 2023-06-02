@@ -98,6 +98,20 @@ pub fn find_single_char_repeating_xor_key_and_message(
     return most_likely_key_and_message;
 }
 
+pub trait Pad {
+    fn pad(&mut self, number_of_bytes: usize) -> Self;
+}
+
+impl Pad for Vec<u8> {
+    fn pad(self: &mut Self, number_of_bytes: usize) -> Self {
+        for _n in 0..number_of_bytes {
+            self.push(0x04);
+        }
+
+        self.to_vec()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

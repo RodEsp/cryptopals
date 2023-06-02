@@ -5,14 +5,8 @@ pub fn vecs(vec1: &Vec<u8>, vec2: &Vec<u8>) -> Vec<u8> {
         .collect()
 }
 
-pub fn u8_against_char(byte: u8, char: char) -> u8 {
-    byte ^ (char as u8)
-}
-
-pub fn vec_against_char(vec: &Vec<u8>, char: char) -> Vec<u8> {
-    let byte: u8 = char as u8;
-
-    vec.into_iter().map(|hex_byte| hex_byte ^ byte).collect()
+pub fn repeating_char(char: char, vec: &Vec<u8>) -> Vec<u8> {
+    vec.into_iter().map(|byte| byte ^ (char as u8)).collect()
 }
 
 pub fn repeating_key(key: &Vec<u8>, vec: &Vec<u8>) -> Vec<u8> {

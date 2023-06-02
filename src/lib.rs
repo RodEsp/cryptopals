@@ -1,5 +1,6 @@
 pub mod ascii;
 pub mod base64;
+pub mod block_ciphers;
 pub mod hex;
 pub mod utilities;
 pub mod xor;
@@ -8,8 +9,7 @@ pub mod xor;
 mod tests {
     use std::{io::BufRead, vec};
 
-    use openssl::symm::{decrypt, Cipher};
-
+    use crate::block_ciphers::*;
     use crate::hex;
     use crate::utilities::*;
     use crate::xor;
@@ -93,59 +93,18 @@ mod tests {
     fn challenge_6_test() {
         // First we read the encrypted data from a file
         let base64_string = read_file("./data/challenge6.txt");
-
         // This is our encrypted data in raw bytes
         let encrypted_bytes = base64::string_to_bytes(&base64_string);
 
-        /* Here we find the most likely key size that was used to encrypt the the data
-         * To do this, for each possible key size from 0 to KEYSIZE, we take two consecutive chunks of the same number of bytes from the encrypted bytes
-         *     chunk_1 = encrypted_bytes[0..KEYSIZE]
-         *     chunk_2 = encrypted_bytes[KEYSIZE..KEYSIZE * 2]
-         * then we find the hamming distance between them and normalize it by dividing by it with the key size
-         *     normalized_hamming_distance = hamming_distance(chunk_1, chunk_2)
-         * The key size that produces the smallest normalized hamming distance is probably the key.
-         * For an explanation of why this works see https://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance/8118#8118
-         */
-        let min_key_size = 2;
-        let max_key_size = 40;
-
-        struct KeySizeWithNormalizedHammingDistance {
-            key_size: usize,
-            normalized_hamming_distance: f32,
-        }
-        let mut key_size_likelihoods = Vec::<KeySizeWithNormalizedHammingDistance>::new(); // Stores each key size with a numerial score that corresponds to the normalized hamming distance it produced
-
-        for key_size in min_key_size..=max_key_size {
-            key_size_likelihoods.push(KeySizeWithNormalizedHammingDistance {
-                key_size,
-                normalized_hamming_distance: hamming_distance(
-                    // Here we multiply the chunk sizes by 4 in order to make the chunks corresponding to each key size bigger
-                    // This gives us an advantage as explained in the link above.
-                    &encrypted_bytes[0..(key_size * 4)],
-                    &encrypted_bytes[(key_size * 4)..(key_size * 2 * 4)],
-                ) as f32
-                    / key_size as f32,
-            });
-        }
-
-        // Sort the key sizes by most likely based on their normalized hamming distances
-        key_size_likelihoods.sort_by(|a, b| {
-            a.normalized_hamming_distance
-                .total_cmp(&b.normalized_hamming_distance)
-        });
-
-        // Now that we probably know the correct key size, we break up the encrypted data into byte blocks of KEYSIZE length.
-        // Each one of these blocks has been encrypted with repeating key XOR using the same key.
-        let most_likely_key_size = key_size_likelihoods[0].key_size;
+        let most_likely_key_size = get_key_size_likelihoods(&encrypted_bytes)[0].key_size;
+        /* Now that we probably know the correct key size, we break up the encrypted data into byte chunks of KEYSIZE length.
+        Each one of these chunks has been encrypted with repeating key XOR using the same key. */
         let key_size_chunks = encrypted_bytes.chunks(most_likely_key_size);
 
-        /* We know that each one of these blocks was encrypted with a repeating key XOR,
-         *  that means that each byte with the same index in each of these blocks was encrypted with the same single character
-         * So to find the repeating key that was used for the encrypted data we will group all bytes in each key sized chunk by their index
-         * Then we can solve each of these group as if it was a single char repeating XOR.
-         */
-
-        // Group the bytes in each key sized byte chunks by their index
+        /* We know that each one of these chunks was encrypted with a repeating key XOR,
+           that means that each byte with the same index in each of these chunks was encrypted with the same single character
+        So to find the repeating key that was used for the encrypted data we will group all bytes in each key sized chunk by their index
+        Then we can solve each of these group as if it was a single char repeating XOR. */
         let bytes_grouped_by_chunk_index =
             key_size_chunks.fold(Vec::<Vec<u8>>::new(), |mut acc, chunk| {
                 for (i, byte) in chunk.iter().enumerate() {
@@ -192,13 +151,7 @@ mod tests {
 
         // This is our encrypted data in raw bytes
         let encrypted_bytes = base64::string_to_bytes(&base64_string);
-        let decrypted_bytes = decrypt(
-            Cipher::aes_128_ecb(),
-            b"YELLOW SUBMARINE",
-            None,
-            encrypted_bytes.as_slice(),
-        )
-        .unwrap();
+        let decrypted_bytes = aes_128_ecb_decrypt("YELLOW SUBMARINE", encrypted_bytes);
 
         assert_eq!(decrypted_bytes, *b"I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n");
     }
@@ -212,15 +165,20 @@ mod tests {
 
         for (index, hex_string) in file.lines().enumerate() {
             let line_number = index + 1;
-            let bytes = hex::string_to_bytes(
+            let encrypted_bytes = hex::string_to_bytes(
                 &hex_string
                     .as_ref()
                     .expect("Could not read hex string from file."),
             );
 
             let mut score = 0;
-            for chunk in bytes.chunks(16) {
-                for next_chunk in bytes.chunks(16) {
+
+            // Compare every encrypted chunk of 16 bytes from the hex string to every other 16 byte chunk in it.
+            // Since ECB ciphers are deterministic - they produce the same ciphertext from the same plain text -
+            //  and English text repeats words or sequences of words
+            //  we should expect SOME of these chunks to match if the hex string was encrypted with ECB.
+            for chunk in encrypted_bytes.chunks(16) {
+                for next_chunk in encrypted_bytes.chunks(16) {
                     if chunk == next_chunk {
                         score += 1;
                     }
@@ -246,6 +204,23 @@ mod tests {
         let mut bytes = ascii::string_to_bytes("YELLOW SUBMARINE");
 
         assert_eq!(20, bytes.pad(4).len());
-        assert_eq!(0x04, *bytes.last().unwrap());
+        assert!(bytes.ends_with(&[0x04, 0x04, 0x04, 0x04]));
+    }
+
+    // Challenge 10
+    #[test]
+    fn challenge_10_test() {
+        let plain_text =
+            "I'm a little tea pot short and stout. Here is my handle. Here is my spout.";
+
+        let encrypted_bytes =
+            aes_128_ecb_encrypt("YELLOW SUBMARINE", ascii::string_to_bytes(&plain_text));
+
+        let decrypted_bytes = aes_128_ecb_decrypt("YELLOW SUBMARINE", encrypted_bytes);
+
+        assert_eq!(
+            ascii::bytes_to_string(&decrypted_bytes).unwrap(),
+            plain_text
+        );
     }
 }

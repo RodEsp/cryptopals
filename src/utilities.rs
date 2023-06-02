@@ -26,10 +26,6 @@ pub fn line_buffer(path: &str) -> impl std::io::BufRead {
 }
 
 pub fn hamming_distance(bytes1: &[u8], bytes2: &[u8]) -> u32 {
-    if bytes1.len() != bytes2.len() {
-        return u32::MAX;
-    }
-
     let mut h_dist = 0;
 
     for i in 0..bytes1.len() {
@@ -39,6 +35,50 @@ pub fn hamming_distance(bytes1: &[u8], bytes2: &[u8]) -> u32 {
     }
 
     return h_dist;
+}
+
+pub struct KeySizeWithNormalizedHammingDistance {
+    pub key_size: usize,
+    normalized_hamming_distance: f32,
+}
+
+pub fn get_key_size_likelihoods(
+    encrypted_bytes: &Vec<u8>,
+) -> Vec<KeySizeWithNormalizedHammingDistance> {
+    /* Here we find the most likely key size that was used to encrypt the the data
+     * To do this, for each possible key size from 0 to KEYSIZE, we take two consecutive chunks of the same number of bytes from the encrypted bytes
+     *     chunk_1 = encrypted_bytes[0..KEYSIZE]
+     *     chunk_2 = encrypted_bytes[KEYSIZE..KEYSIZE * 2]
+     * then we find the hamming distance between them and normalize it by dividing by it with the key size
+     *     normalized_hamming_distance = hamming_distance(chunk_1, chunk_2)
+     * The key size that produces the smallest normalized hamming distance is probably the key.
+     * For an explanation of why this works see https://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance/8118#8118
+     */
+    let min_key_size = 2;
+    let max_key_size = 40;
+
+    let mut key_size_likelihoods = Vec::<KeySizeWithNormalizedHammingDistance>::new(); // Stores each key size with a numerial score that corresponds to the normalized hamming distance it produced
+
+    for key_size in min_key_size..=max_key_size {
+        key_size_likelihoods.push(KeySizeWithNormalizedHammingDistance {
+            key_size,
+            normalized_hamming_distance: hamming_distance(
+                // Here we multiply the chunk sizes by 4 in order to make the chunks corresponding to each key size bigger
+                // This gives us an advantage as explained in the link above.
+                &encrypted_bytes[0..(key_size * 4)],
+                &encrypted_bytes[(key_size * 4)..(key_size * 2 * 4)],
+            ) as f32
+                / key_size as f32,
+        });
+    }
+
+    // Sort the key sizes by most likely based on their normalized hamming distances
+    key_size_likelihoods.sort_by(|a, b| {
+        a.normalized_hamming_distance
+            .total_cmp(&b.normalized_hamming_distance)
+    });
+
+    return key_size_likelihoods;
 }
 
 // Checks how many times the 13 most common english language characters appear in a string (represented by its individual bytes) and returns their count
@@ -66,7 +106,7 @@ pub fn find_single_char_repeating_xor_key_and_message(
         .into_iter()
         .map(move |char| {
             // XOR the given hex_string against each ASCII character
-            let decrypted_bytes = xor::vec_against_char(bytes, char);
+            let decrypted_bytes = xor::repeating_char(char, bytes);
 
             // Take the resulting bytes and figure out which one is the most likely to be a secret message, written in English
             if decrypted_bytes

@@ -27,3 +27,26 @@ pub fn repeating_key(key: &Vec<u8>, vec: &Vec<u8>) -> Vec<u8> {
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::hex;
+
+    use super::*;
+
+    #[test]
+    fn xor_bytes() {
+        let vec1 = hex::string_to_bytes("01");
+        let vec2 = hex::string_to_bytes("02");
+        let xor_ed_vec = hex::string_to_bytes("03");
+        assert_eq!(vecs(&vec1, &vec2), xor_ed_vec);
+    }
+
+    #[test]
+    fn xor_multiple_bytes() {
+        let vec1 = hex::string_to_bytes("01020102");
+        let vec2 = hex::string_to_bytes("02010303");
+        let xor_ed_vec = hex::string_to_bytes("03030201");
+        assert_eq!(vecs(&vec1, &vec2), xor_ed_vec);
+    }
+}

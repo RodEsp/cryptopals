@@ -1,8 +1,8 @@
 use cryptopals::ascii;
-use cryptopals::traits::Pad;
+use cryptopals::traits::Pkcs7Padding;
 
 #[test]
-fn pad_bytes_with_pkcs7() {
+fn pad_16_bytes_with_pkcs7() {
     let mut bytes = ascii::string_to_bytes("YELLOW SUBMARINE");
 
     assert_eq!(32, bytes.pad_pkcs7().len());

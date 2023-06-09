@@ -3,17 +3,18 @@ const PKCS7_PADDING_BYTES: [u8; 16] = [
 ];
 
 pub trait Pkcs7Padding {
-    fn pad_pkcs7(self: &mut Self) -> &mut Self;
+    fn add_pkcs7_padding(self: &mut Self) -> &mut Self;
     fn remove_pkcs7_padding(self: &mut Self) -> &mut Self;
 }
 
 impl Pkcs7Padding for Vec<u8> {
-    fn pad_pkcs7(self: &mut Self) -> &mut Self {
+    fn add_pkcs7_padding(self: &mut Self) -> &mut Self {
         let num_of_bytes_needed = 16 - (self.len() % 16);
 
-        for _i in 0..num_of_bytes_needed {
-            self.push(PKCS7_PADDING_BYTES[num_of_bytes_needed - 1]);
-        }
+        self.extend(vec![
+            PKCS7_PADDING_BYTES[num_of_bytes_needed - 1];
+            num_of_bytes_needed
+        ]);
 
         self
     }

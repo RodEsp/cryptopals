@@ -51,7 +51,7 @@ pub mod aes_128 {
             let mut encrypted_bytes = Vec::<u8>::new();
 
             // Make bytes.len() a multiple of the block size for cbc encryption
-            bytes.pad_pkcs7();
+            bytes.add_pkcs7_padding();
 
             let mut blocks = bytes.chunks(16);
             let mut prev_block = iv;

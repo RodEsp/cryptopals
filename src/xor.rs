@@ -10,19 +10,11 @@ pub fn repeating_char(char: char, vec: &Vec<u8>) -> Vec<u8> {
 }
 
 pub fn repeating_key(key: &Vec<u8>, vec: &Vec<u8>) -> Vec<u8> {
-    let key_length = key.len() - 1;
-    let mut key_index = 0;
+    let mut key_repeater = key.into_iter().cycle();
 
     vec.into_iter()
         .map(|hex_byte| {
-            let encrypted_byte = hex_byte ^ key[key_index];
-
-            if key_index == key_length {
-                key_index = 0;
-            } else {
-                key_index += 1;
-            }
-
+            let encrypted_byte = hex_byte ^ key_repeater.next().unwrap();
             return encrypted_byte;
         })
         .collect()

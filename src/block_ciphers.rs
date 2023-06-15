@@ -1,4 +1,5 @@
 pub mod aes_128 {
+
     pub mod ecb {
         use openssl::symm::{Cipher, Mode};
 
@@ -33,6 +34,25 @@ pub mod aes_128 {
             decrypted_bytes.truncate(count + final_count);
 
             decrypted_bytes
+        }
+
+        pub fn detect(encrypted_bytes: Vec<u8>) -> bool {
+            let block_size = Cipher::aes_128_ecb().block_size();
+            let mut score = 0;
+
+            // Compare every encrypted chunk of 16 bytes from the hex string to every other 16 byte chunk in it.
+            // Since ECB ciphers are deterministic - they produce the same ciphertext from the same plain text -
+            //  and English text repeats words or sequences of words
+            //  we should expect SOME of these chunks to match if the hex string was encrypted with ECB.
+            for chunk in encrypted_bytes.chunks(block_size) {
+                for next_chunk in encrypted_bytes.chunks(block_size) {
+                    if chunk == next_chunk {
+                        score += 1;
+                    }
+                }
+            }
+
+            return score > encrypted_bytes.len() / block_size;
         }
     }
 
@@ -81,24 +101,37 @@ pub mod aes_128 {
         use crate::{ascii, traits::PadRand, utilities::random_bytes};
         use rand::{random, Rng};
 
-        pub fn encrypt(plain_text: &str) -> Vec<u8> {
+        pub fn encrypt(plain_text: &str) -> (String, Vec<u8>) {
             let mut rng = rand::thread_rng();
 
             let mut bytes = ascii::string_to_bytes(&plain_text);
-            bytes.left_pad_rand(dbg!(rng.gen_range(5..=10)));
-            bytes.right_pad_rand(dbg!(rng.gen_range(5..=10)));
+            bytes.left_pad_rand(rng.gen_range(5..=10));
+            bytes.right_pad_rand(rng.gen_range(5..=10));
 
             let key = random_bytes(16);
             let iv = random_bytes(16);
 
+            let encryption_type: String;
             let encrypted_bytes: Vec<u8>;
             if random::<bool>() {
+                encryption_type = "ECB".to_string();
                 encrypted_bytes = super::ecb::encrypt(key, bytes, true);
             } else {
+                encryption_type = "CBC".to_string();
                 encrypted_bytes = super::cbc::encrypt(key, iv, bytes);
             }
 
-            encrypted_bytes
+            (encryption_type, encrypted_bytes)
+        }
+
+        pub fn detect_ecb_vs_cbc_encryption(encrypted_bytes: Vec<u8>) -> String {
+            let mut encryption_type: String = "CBC".to_string();
+
+            if super::ecb::detect(encrypted_bytes) {
+                encryption_type = "ECB".to_string();
+            }
+
+            return encryption_type;
         }
     }
 }
@@ -212,10 +245,5 @@ mod tests {
         let decrypted_bytes = aes_128::cbc::decrypt(key, iv.to_vec(), encrypted_bytes.clone());
 
         assert_eq!(decrypted_bytes, plain_text.as_bytes());
-    }
-
-    #[test]
-    fn encryption_oracle() {
-        println!("{:?}", aes_128::encryption_oracle::encrypt("This is a long text that repeats some long text because this is a long text that repeats some long text."));
     }
 }

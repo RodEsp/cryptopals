@@ -3,6 +3,8 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use openssl::rand::rand_bytes;
+
 use crate::{ascii, xor};
 
 pub fn read_file(path: &str) -> String {
@@ -138,6 +140,15 @@ pub fn find_single_char_repeating_xor_key_and_message(
     return most_likely_key_and_message;
 }
 
+pub fn random_bytes(num_of_bytes: usize) -> Vec<u8> {
+    let mut bytes: Vec<u8> = vec![0; num_of_bytes];
+
+    let mut bytes_slice = bytes.as_mut_slice();
+    rand_bytes(&mut bytes_slice).expect("Could not generate random bytes");
+
+    bytes
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +162,13 @@ mod tests {
             ),
             37
         );
+    }
+
+    #[test]
+    fn generate_random_key() {
+        let key = random_bytes(16);
+
+        assert_eq!(key.len(), 16);
+        assert!(key.into_iter().any(|byte| byte != 0 as u8))
     }
 }

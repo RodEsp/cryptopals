@@ -5,10 +5,10 @@ use cryptopals::{ascii, base64};
 #[test]
 fn encrypt_aes_128_ecb_with_given_key() {
     let plain_text = "I'm a little tea pot short and stout. Here is my handle. Here is my spout.";
-    let key = "YELLOW SUBMARINE";
+    let key = "YELLOW SUBMARINE".as_bytes().to_vec();
 
-    let encrypted_bytes = aes_128::ecb::encrypt(key, ascii::string_to_bytes(&plain_text), true);
-
+    let encrypted_bytes =
+        aes_128::ecb::encrypt(key.clone(), ascii::string_to_bytes(&plain_text), true);
     let decrypted_bytes = aes_128::ecb::decrypt(key, encrypted_bytes, true);
 
     assert_eq!(ascii::bytes_to_string(&decrypted_bytes), plain_text);
@@ -20,7 +20,7 @@ fn implement_cbc_mode() {
     let encrypted_bytes = base64::string_to_bytes(&base64_string);
 
     let decrypted_bytes = aes_128::cbc::decrypt(
-        "YELLOW SUBMARINE",
+        "YELLOW SUBMARINE".as_bytes().to_vec(),
         vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         encrypted_bytes,
     );

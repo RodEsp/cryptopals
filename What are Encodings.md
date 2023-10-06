@@ -112,7 +112,7 @@ This is how you encode this byte, `01000001`, into Base64:
     1. `010000` -> "Q"
 1. Lookup `010000` in the Base64 alphabet.
     1. `010000` -> "Q"
-1. Put them together "Q" + "Q" = "Q"
+1. Put them together "Q" + "Q" = "QQ"
 
 > Base64 has 64 symbols in its alphabet
 > ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/

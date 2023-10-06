@@ -186,10 +186,13 @@ Wait what?
 # All encodings are displayed with the ASCII alphabet (continued...)
 **Binary**
 A chunk is one bit, an `off` bit represents the digit "0", an `on` bit represents "1".
+
 **Hex**
 A single `off` bit doesn't represent anything, but four `off` bits represent the symbol "0".
+
 **Base64**
 You need 6 bits to represent a symbol, six `off` bits represent the symbol "A".
+
 **ASCII**
 You need a byte (8 bits) to represent a symbol, eight `off` bits represent... actually ASCII is weird (the first 32 symbols in ASCII are not text but we won't get into that here).
 

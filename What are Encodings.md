@@ -303,4 +303,4 @@ This is how you _display_ this byte, `01000001`, in Base64:
 
 # Thanks!
 
-Reach me at rodesp@hey.com if you have any feedback!
+Reach me at [REDACTED] if you have any feedback!

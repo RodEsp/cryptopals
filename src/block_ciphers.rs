@@ -109,7 +109,6 @@ pub mod aes_128 {
             bytes.right_pad_rand(rng.gen_range(5..=10));
 
             let key = random_bytes(16);
-            let iv = random_bytes(16);
 
             let encryption_type: String;
             let encrypted_bytes: Vec<u8>;
@@ -118,6 +117,8 @@ pub mod aes_128 {
                 encrypted_bytes = super::ecb::encrypt(key, bytes, true);
             } else {
                 encryption_type = "CBC".to_string();
+
+                let iv = random_bytes(16);
                 encrypted_bytes = super::cbc::encrypt(key, iv, bytes);
             }
 

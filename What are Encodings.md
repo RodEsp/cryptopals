@@ -167,7 +167,7 @@ Lets encode this byte into all four different encodings:
 |BINARY |0|1|0|0|0|0|0|1| <- 1 bit worth of information per symbol
 |-----------------------|
 |BASE64 |     Q     | Q | <- 6 bits worth of information per symbol 
-|=======================|    Remember we turn `01` into `000000` for Base64 
+|=======================|    Remember we turn `01` into `010000` for Base64 
 ```
 
 ---
